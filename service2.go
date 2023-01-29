@@ -8,6 +8,7 @@ import (
 
 type Task struct {
 	Id         int               `json:"id"`
+	Status     string            `json:"status"`
 	Method     string            `json:"method"`
 	Url        string            `json:"url"`
 	Headers    map[string]string `json:"headers"`

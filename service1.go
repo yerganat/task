@@ -22,7 +22,7 @@ func NewTaskServer() *taskServer {
 func (ts *taskServer) taskHandler(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/task/" {
 		if req.Method == http.MethodPost {
-			ts.createTaskHandler(w, req)
+			ts.postHandler(w, req)
 		} else {
 			http.Error(w, fmt.Sprintf("expect method GET, DELETE or POST at /task/, got %v", req.Method), http.StatusMethodNotAllowed)
 			return
@@ -41,7 +41,7 @@ func (ts *taskServer) taskHandler(w http.ResponseWriter, req *http.Request) {
 		}
 
 		if req.Method == http.MethodGet {
-			ts.getTaskHandler(w, req, id)
+			ts.getHandler(w, req, id)
 		} else {
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -49,7 +49,7 @@ func (ts *taskServer) taskHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (ts *taskServer) createTaskHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *taskServer) postHandler(w http.ResponseWriter, req *http.Request) {
 	log.Printf("handling task create at %s\n", req.URL.Path)
 
 	// Types used internally in this handler to (de-)serialize the request and
@@ -93,7 +93,7 @@ func (ts *taskServer) createTaskHandler(w http.ResponseWriter, req *http.Request
 	w.Write(js)
 }
 
-func (ts *taskServer) getTaskHandler(w http.ResponseWriter, req *http.Request, id int) {
+func (ts *taskServer) getHandler(w http.ResponseWriter, req *http.Request, id int) {
 	log.Printf("handling get task at %s\n", req.URL.Path)
 
 	task, err := ts.store.GetTask(id)

@@ -1,0 +1,24 @@
+syntax = "proto3";
+package entity;
+
+option go_package = "yerganat.com/test;entity";
+
+service Tasks {
+  rpc Save (Task) returns (Status) {}
+  rpc Check (TaskCheck) returns (Status) {}
+}
+
+message Task {
+  int32 Id = 1;
+  string Method = 2;
+  string Url = 3;
+  map<string, string> Headers = 4;
+}
+
+message Status {
+  string Status = 1;
+}
+
+message TaskCheck {
+  int32 Id = 1;
+}
