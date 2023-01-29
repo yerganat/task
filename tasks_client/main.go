@@ -1,25 +1,58 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"mime"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"testtask/entity"
 )
 
-type taskServer struct {
-	store *TaskStore
+var (
+	addr = flag.String("addr", "localhost:50051", "the address to connect to")
+)
+
+type taskRPCClient struct {
+	rpcCtx    context.Context
+	rpcClient entity.TasksClient
 }
 
-func NewTaskServer() *taskServer {
-	store := New()
-	return &taskServer{store: store}
+func NewTaskRpcClient() *taskRPCClient {
+	flag.Parse()
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client := entity.NewTasksClient(conn)
+
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	return &taskRPCClient{rpcCtx: ctx, rpcClient: client}
 }
 
-func (ts *taskServer) taskHandler(w http.ResponseWriter, req *http.Request) {
+func main() {
+
+	mux := http.NewServeMux()
+	taskRPCClient := NewTaskRpcClient()
+	mux.HandleFunc("/task/", taskRPCClient.taskHandler)
+
+	log.Fatal(http.ListenAndServe("localhost:8080", mux))
+}
+
+func (ts *taskRPCClient) taskHandler(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/task/" {
 		if req.Method == http.MethodPost {
 			ts.postHandler(w, req)
@@ -49,7 +82,7 @@ func (ts *taskServer) taskHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (ts *taskServer) postHandler(w http.ResponseWriter, req *http.Request) {
+func (ts *taskRPCClient) postHandler(w http.ResponseWriter, req *http.Request) {
 	log.Printf("handling task create at %s\n", req.URL.Path)
 
 	// Types used internally in this handler to (de-)serialize the request and
@@ -83,7 +116,13 @@ func (ts *taskServer) postHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	id := ts.store.CreateTask(rt.Method, rt.Url, rt.Headers)
+	status, err := ts.rpcClient.Save(ts.rpcCtx, &entity.Task{
+		Method:  rt.Method,
+		Url:     rt.Url,
+		Headers: rt.Headers,
+	})
+
+	id, err := strconv.Atoi(status.Status)
 	js, err := json.Marshal(ResponseId{Id: id})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,27 +132,22 @@ func (ts *taskServer) postHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write(js)
 }
 
-func (ts *taskServer) getHandler(w http.ResponseWriter, req *http.Request, id int) {
+func (ts *taskRPCClient) getHandler(w http.ResponseWriter, req *http.Request, id int) {
 	log.Printf("handling get task at %s\n", req.URL.Path)
 
-	task, err := ts.store.GetTask(id)
+	status, err := ts.rpcClient.Check(ts.rpcCtx, &entity.TaskCheck{
+		Id: int32(id),
+	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
-	js, err := json.Marshal(task)
+	js, err := json.Marshal(status)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(js)
-}
-func main() {
-	mux := http.NewServeMux()
-	server := NewTaskServer()
-	mux.HandleFunc("/task/", server.taskHandler)
-
-	log.Fatal(http.ListenAndServe("localhost:8080", mux))
 }
