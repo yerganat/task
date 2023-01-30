@@ -3,12 +3,17 @@
 
     _go run tasks_client/main.go_
 
+
+JSON:
+
 **POST** http://localhost:8080/task/
-   {
+  
+ {
    "method": "POST",
    "url": "https://google.com",
    "headers": {"Accept-Language":"kz"}
    }
+
 **GET** http://localhost:8080/task/1
 
 
