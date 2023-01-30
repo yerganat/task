@@ -4,8 +4,8 @@ package entity;
 option go_package = "yerganat.com/test;entity";
 
 service Tasks {
-  rpc Save (Task) returns (Status) {}
-  rpc Check (TaskCheck) returns (Status) {}
+  rpc Save (Task) returns (TaskId) {}
+  rpc Check (TaskId) returns (Status) {}
 }
 
 message Task {
@@ -19,6 +19,6 @@ message Status {
   string Status = 1;
 }
 
-message TaskCheck {
+message TaskId {
   int32 Id = 1;
 }

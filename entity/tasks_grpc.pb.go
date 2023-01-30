@@ -18,8 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type TasksClient interface {
-	Save(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Status, error)
-	Check(ctx context.Context, in *TaskCheck, opts ...grpc.CallOption) (*Status, error)
+	Save(ctx context.Context, in *Task, opts ...grpc.CallOption) (*TaskId, error)
+	Check(ctx context.Context, in *TaskId, opts ...grpc.CallOption) (*Status, error)
 }
 
 type tasksClient struct {
@@ -30,8 +30,8 @@ func NewTasksClient(cc grpc.ClientConnInterface) TasksClient {
 	return &tasksClient{cc}
 }
 
-func (c *tasksClient) Save(ctx context.Context, in *Task, opts ...grpc.CallOption) (*Status, error) {
-	out := new(Status)
+func (c *tasksClient) Save(ctx context.Context, in *Task, opts ...grpc.CallOption) (*TaskId, error) {
+	out := new(TaskId)
 	err := c.cc.Invoke(ctx, "/entity.Tasks/Save", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func (c *tasksClient) Save(ctx context.Context, in *Task, opts ...grpc.CallOptio
 	return out, nil
 }
 
-func (c *tasksClient) Check(ctx context.Context, in *TaskCheck, opts ...grpc.CallOption) (*Status, error) {
+func (c *tasksClient) Check(ctx context.Context, in *TaskId, opts ...grpc.CallOption) (*Status, error) {
 	out := new(Status)
 	err := c.cc.Invoke(ctx, "/entity.Tasks/Check", in, out, opts...)
 	if err != nil {
@@ -52,8 +52,8 @@ func (c *tasksClient) Check(ctx context.Context, in *TaskCheck, opts ...grpc.Cal
 // All implementations must embed UnimplementedTasksServer
 // for forward compatibility
 type TasksServer interface {
-	Save(context.Context, *Task) (*Status, error)
-	Check(context.Context, *TaskCheck) (*Status, error)
+	Save(context.Context, *Task) (*TaskId, error)
+	Check(context.Context, *TaskId) (*Status, error)
 	mustEmbedUnimplementedTasksServer()
 }
 
@@ -61,10 +61,10 @@ type TasksServer interface {
 type UnimplementedTasksServer struct {
 }
 
-func (UnimplementedTasksServer) Save(context.Context, *Task) (*Status, error) {
+func (UnimplementedTasksServer) Save(context.Context, *Task) (*TaskId, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Save not implemented")
 }
-func (UnimplementedTasksServer) Check(context.Context, *TaskCheck) (*Status, error) {
+func (UnimplementedTasksServer) Check(context.Context, *TaskId) (*Status, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
 }
 func (UnimplementedTasksServer) mustEmbedUnimplementedTasksServer() {}
@@ -99,7 +99,7 @@ func _Tasks_Save_Handler(srv interface{}, ctx context.Context, dec func(interfac
 }
 
 func _Tasks_Check_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TaskCheck)
+	in := new(TaskId)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func _Tasks_Check_Handler(srv interface{}, ctx context.Context, dec func(interfa
 		FullMethod: "/entity.Tasks/Check",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TasksServer).Check(ctx, req.(*TaskCheck))
+		return srv.(TasksServer).Check(ctx, req.(*TaskId))
 	}
 	return interceptor(ctx, in, info, handler)
 }

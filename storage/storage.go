@@ -13,7 +13,13 @@ type Task struct {
 	Url        string            `json:"url"`
 	Headers    map[string]string `json:"headers"`
 	CreateDate time.Time         `json:"create_date"`
+	Result     string            `json:"result"`
 }
+
+const TaskNew = "new"
+const TaskProgress = "in_process"
+const TaskDone = "done"
+const TaskError = "error"
 
 // simple In-Memory concurrency storage
 type TaskStore struct {
@@ -39,6 +45,7 @@ func (ts *TaskStore) CreateTask(method string, url string, headers map[string]st
 		Method:     method,
 		Url:        url,
 		CreateDate: time.Now(),
+		Status:     TaskNew,
 	}
 
 	task.Headers = make(map[string]string, len(headers))
@@ -62,5 +69,15 @@ func (ts *TaskStore) GetTask(id int) (Task, error) {
 		return t, nil
 	} else {
 		return Task{}, fmt.Errorf("task with id=%d not found", id)
+	}
+}
+
+func (ts *TaskStore) UpdateTask(id int, status string, result string) {
+	ts.Lock()
+	defer ts.Unlock()
+
+	if task, ok := ts.tasks[id]; ok {
+		task.Status = status
+		task.Result = result
 	}
 }

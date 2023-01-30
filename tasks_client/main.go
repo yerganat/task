@@ -44,7 +44,7 @@ func NewTaskRpcClient() *taskRPCClient {
 }
 
 func main() {
-
+	log.Printf("Start clinet localhost:8080")
 	mux := http.NewServeMux()
 	taskRPCClient := NewTaskRpcClient()
 	mux.HandleFunc("/task/", taskRPCClient.taskHandler)
@@ -116,14 +116,13 @@ func (ts *taskRPCClient) postHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	status, err := ts.rpcClient.Save(ts.rpcCtx, &entity.Task{
+	taskId, err := ts.rpcClient.Save(ts.rpcCtx, &entity.Task{
 		Method:  rt.Method,
 		Url:     rt.Url,
 		Headers: rt.Headers,
 	})
 
-	id, err := strconv.Atoi(status.Status)
-	js, err := json.Marshal(ResponseId{Id: id})
+	js, err := json.Marshal(ResponseId{Id: int(taskId.Id)})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -135,7 +134,7 @@ func (ts *taskRPCClient) postHandler(w http.ResponseWriter, req *http.Request) {
 func (ts *taskRPCClient) getHandler(w http.ResponseWriter, req *http.Request, id int) {
 	log.Printf("handling get task at %s\n", req.URL.Path)
 
-	status, err := ts.rpcClient.Check(ts.rpcCtx, &entity.TaskCheck{
+	status, err := ts.rpcClient.Check(ts.rpcCtx, &entity.TaskId{
 		Id: int32(id),
 	})
 	if err != nil {
