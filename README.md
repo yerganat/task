@@ -1,5 +1,4 @@
 # task
-
 1. Клиент сервис
 
     _go run tasks_client/main.go_
@@ -16,3 +15,5 @@
 2. Сервис-краулер(работает по порту 50051 через gRPC)
 
    _go run tasks_service/main.go_
+
+   _Описани сервиса  entity/tasks.proto_
